@@ -5,3 +5,15 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = []
+
+[tool.ruff.lint]
+select = ["W", "E", "F", "I", "N", "Q", "A", "LOG", "PTH", "ANN", "PL", "RUF"]
+
+[tool.uv]
+package = false
+
+[tool.mypy]
+strict = true
+
+[dependency-groups]
+dev = ["mypy>=1.17.1", "pre-commit>=4.2.0", "ruff>=0.12.7"]
