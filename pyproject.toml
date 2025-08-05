@@ -5,10 +5,10 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "pygithub>=2.7.0",
+    "githubkit>=0.13.0",
+    "niquests>=3.14.1",
     "python-dotenv>=1.1.1",
     "pyyaml>=6.0.2",
-    "requests>=2.32.4",
 ]
 
 [tool.ruff.lint]
@@ -26,5 +26,4 @@ dev = [
     "pre-commit>=4.2.0",
     "ruff>=0.12.7",
     "types-pyyaml>=6.0.12.20250516",
-    "types-requests>=2.32.4.20250611",
 ]

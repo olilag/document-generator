@@ -1,32 +1,36 @@
 import re
-from http.client import OK
 from os import environ
 from pathlib import Path
 from tempfile import mkdtemp
 
-import requests
-from github import Auth, Github
-from github.Issue import Issue
+import niquests
+from githubkit import GitHub
+from githubkit.versions.latest.models import Issue, IssuePropPullRequest
 
 
-def get_issues(repo: str) -> Path:
+def get_issues(owner: str, repo: str) -> Path:
     t = Path(mkdtemp(dir="."))
 
-    auth = Auth.Token(environ["GH_TOKEN"])
-    g = Github(auth=auth)
-
-    for issue in g.get_repo(repo).get_issues(labels=["Na testovanie"]):
+    g = GitHub(environ["GH_TOKEN"])
+    resp = g.rest.issues.list_for_repo(owner, repo, labels="Na testovanie")
+    issues: list[Issue] = resp.parsed_data
+    for issue in issues:
         _process_issue(issue, t)
     return t
 
 
 def _process_issue(issue: Issue, parent_dir: Path) -> None:
+    # github may lists pull requests as issues
+    if isinstance(issue.pull_request, IssuePropPullRequest):
+        return
+
     issue_dir = parent_dir / str(issue.id)
     issue_dir.mkdir()
 
     with Path.open(issue_dir / "problem.md", "w", encoding="utf-8") as p_file:
-        processed = _download_images(issue.body, issue_dir)
-        p_file.write(processed)
+        if isinstance(issue.body, str):
+            processed = _download_images(issue.body, issue_dir)
+            p_file.write(processed)
 
     with Path.open(issue_dir / "meta.yaml", "w", encoding="utf-8") as m_file:
         m_file.write(f"title: {issue.title}\n")
@@ -40,8 +44,11 @@ def _download_images(issue_body: str, issue_dir: Path) -> str:
     cookies = {"user_session": environ["GH_SESSION"]}
 
     for url in urls:
-        response = requests.get(url, cookies=cookies)
-        if response.status_code == OK:
+        response = niquests.get(url, cookies=cookies)
+        if (
+            response.status_code == niquests.codes["ok"]
+            and response.content is not None
+        ):
             file_name = url.split("/")[-1]
             with Path.open(issue_dir / file_name, "wb") as file:
                 file.write(response.content)

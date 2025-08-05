@@ -8,7 +8,7 @@ from pdf_gen import generate_pdf
 
 def main() -> None:
     load_dotenv()
-    d = get_issues(f"{environ['REPO_OWNER']}/{environ['REPO_NAME']}")
+    d = get_issues(environ["REPO_OWNER"], environ["REPO_NAME"])
     generate_pdf(d)
 
 
