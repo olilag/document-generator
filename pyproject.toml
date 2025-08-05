@@ -4,7 +4,12 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "pygithub>=2.7.0",
+    "python-dotenv>=1.1.1",
+    "pyyaml>=6.0.2",
+    "requests>=2.32.4",
+]
 
 [tool.ruff.lint]
 select = ["W", "E", "F", "I", "N", "Q", "A", "LOG", "PTH", "ANN", "PL", "RUF"]
@@ -16,4 +21,10 @@ package = false
 strict = true
 
 [dependency-groups]
-dev = ["mypy>=1.17.1", "pre-commit>=4.2.0", "ruff>=0.12.7"]
+dev = [
+    "mypy>=1.17.1",
+    "pre-commit>=4.2.0",
+    "ruff>=0.12.7",
+    "types-pyyaml>=6.0.12.20250516",
+    "types-requests>=2.32.4.20250611",
+]

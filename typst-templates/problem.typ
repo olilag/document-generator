@@ -18,6 +18,7 @@
     read("/" + directory + "/problem.md"),
     math: mitex,
     h1-level: 3,
+    scope: (image: (path, alt: none) => image("/" + directory + "/" + path, alt: alt)),
     html: (details: (attrs, body) => []),
   )
   if is-test(round) {
