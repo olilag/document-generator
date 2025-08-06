@@ -2,9 +2,10 @@
 #import "@preview/mitex:0.2.4": mitex
 
 #let _c = counter("problem")
+#let _path-prefix = "/input/"
 
 #let problem(directory, round, is-test) = {
-  let meta = yaml("/" + directory + "/meta.yaml")
+  let meta = yaml(_path-prefix + directory + "/meta.yaml")
   let name = meta.title
 
   _c.step()
@@ -14,13 +15,15 @@
   ] else [
     == #round.#_c.display() - #name
   ]
+
   cmarker.render(
-    read("/" + directory + "/problem.md"),
+    read(_path-prefix + directory + "/problem.md"),
     math: mitex,
     h1-level: 3,
-    scope: (image: (path, alt: none) => image("/" + directory + "/" + path, alt: alt)),
+    scope: (image: (path, alt: none) => image(_path-prefix + directory + "/" + path, alt: alt)),
     html: (details: (attrs, body) => []),
   )
+
   if is-test(round) {
     pagebreak(weak: true)
   }

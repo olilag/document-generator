@@ -1,3 +1,4 @@
+from datetime import datetime
 from os import environ
 
 from dotenv import load_dotenv
@@ -8,7 +9,8 @@ from pdf_gen import generate_pdf
 
 def main() -> None:
     load_dotenv()
-    d = get_issues(environ["REPO_OWNER"], environ["REPO_NAME"])
+    now = datetime.now()
+    d = get_issues(now, environ["REPO_OWNER"], environ["REPO_NAME"])
     generate_pdf(d)
 
 
