@@ -33,12 +33,12 @@ def _process_issue(issue: Issue, parent_dir: Path) -> None:
     issue_dir = parent_dir / str(issue.id)
     issue_dir.mkdir()
 
-    with Path.open(issue_dir / "problem.md", "w", encoding="utf-8") as p_file:
+    with issue_dir.joinpath("problem.md").open("w", encoding="utf-8") as p_file:
         if isinstance(issue.body, str):
             processed = _download_images(issue.body, issue_dir)
             p_file.write(processed)
 
-    with Path.open(issue_dir / "meta.yaml", "w", encoding="utf-8") as m_file:
+    with issue_dir.joinpath("meta.yaml").open("w", encoding="utf-8") as m_file:
         m_file.write(f"title: {issue.title}\n")
 
 
@@ -56,7 +56,7 @@ def _download_images(issue_body: str, issue_dir: Path) -> str:
             and response.content is not None
         ):
             file_name = url.split("/")[-1]
-            with Path.open(issue_dir / file_name, "wb") as file:
+            with issue_dir.joinpath(file_name).open("wb") as file:
                 file.write(response.content)
             issue_body = issue_body.replace(url, file_name, 1)
     return issue_body

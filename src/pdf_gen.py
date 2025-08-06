@@ -20,7 +20,7 @@ def generate_pdf(issue_dir: Path) -> None:
         str(d.relative_to(issue_dir.parent)) for d in issue_dir.iterdir() if d.is_dir()
     ]
     meta = Meta(volume=1, year="2025/2026", round=None, sources=directories)
-    with Path.open(issue_dir / "meta.yaml", "w", encoding="utf-8") as meta_file:
+    with issue_dir.joinpath("meta.yaml").open("w", encoding="utf-8") as meta_file:
         yaml.safe_dump(meta, meta_file)
 
     _run_typst(issue_dir, Path(OUTPUT_DIR) / issue_dir.name)
