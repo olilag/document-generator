@@ -1,7 +1,7 @@
-import asyncio
 from datetime import datetime
 from os import environ
 
+import uvloop
 from dotenv import load_dotenv
 
 from gh_api import get_issues
@@ -21,4 +21,4 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    uvloop.run(main())

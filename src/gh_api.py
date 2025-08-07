@@ -6,8 +6,10 @@ from pathlib import Path
 from typing import Optional
 
 import niquests
+from aiofile import async_open
 from githubkit import GitHub
 from githubkit.versions.latest.models import Issue, IssuePropPullRequest
+from niquests import AsyncSession
 
 TEST_PREFIX = "testovanie"
 DATE_FMT = "%d-%m-%Y-%H:%M:%S"
@@ -24,7 +26,6 @@ async def get_issues(now: datetime, owner: str, repo: str) -> Path:
         owner, repo, state="open", labels=LABEL_FILTER
     )
     issues: list[Issue] = resp.parsed_data
-    # tasks: list[Task] = []
     async with asyncio.TaskGroup() as tg:
         for issue in issues:
             tg.create_task(_process_issue(issue, t))
@@ -41,13 +42,14 @@ async def _process_issue(issue: Issue, parent_dir: Path) -> None:
 
     print(f"Saving issue: {issue.title}")
 
-    with issue_dir.joinpath("problem.md").open("w", encoding="utf-8") as p_file:
+    async with async_open(issue_dir / "problem.md", "w", encoding="utf-8") as p_file:
+        processed = "missing issue body"
         if isinstance(issue.body, str):
             processed = await _download_images(issue.body, issue_dir)
-            p_file.write(processed)
+        await p_file.write(processed)
 
-    with issue_dir.joinpath("meta.yaml").open("w", encoding="utf-8") as m_file:
-        m_file.write(f"title: {issue.title}\n")
+    async with async_open(issue_dir / "meta.yaml", "w", encoding="utf-8") as m_file:
+        await m_file.write(f"title: {issue.title}\n")
 
 
 url_regexp = re.compile(r"https?://[^\")]+")
@@ -58,9 +60,12 @@ async def _download_images(issue_body: str, issue_dir: Path) -> str:
     cookies = {"user_session": environ["GH_SESSION"]}
 
     tasks: list[asyncio.Task[Optional[tuple[str, str]]]] = []
-    async with asyncio.TaskGroup() as tg:
-        for url in urls:
-            tasks.append(tg.create_task(_download_image(issue_dir, url, cookies)))
+    async with AsyncSession() as s:
+        async with asyncio.TaskGroup() as tg:
+            for url in urls:
+                tasks.append(
+                    tg.create_task(_download_image(s, issue_dir, url, cookies))
+                )
 
     for task in tasks:
         r = task.result()
@@ -72,12 +77,12 @@ async def _download_images(issue_body: str, issue_dir: Path) -> str:
 
 
 async def _download_image(
-    issue_dir: Path, url: str, cookies: dict[str, str]
+    s: AsyncSession, issue_dir: Path, url: str, cookies: dict[str, str]
 ) -> Optional[tuple[str, str]]:
-    response = await niquests.aget(url, cookies=cookies)
+    response = await s.get(url, cookies=cookies)
     if response.status_code == niquests.codes["ok"] and response.content is not None:
         file_name = url.split("/")[-1]
-        with issue_dir.joinpath(file_name).open("wb") as file:
-            file.write(response.content)
+        async with async_open(issue_dir / file_name, "wb") as file:
+            await file.write(response.content)
         return (url, file_name)
     return None

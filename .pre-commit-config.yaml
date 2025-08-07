@@ -22,5 +22,7 @@ repos:
             "githubkit>=0.13.0",
             "niquests>=3.14.1",
             "python-dotenv>=1.1.1",
+            "uvloop>=0.21.0",
+            "aiofile>=3.9.0",
           ]
         args: [--strict]
