@@ -8,8 +8,9 @@ from typing import Optional
 import niquests
 from aiofile import async_open
 from githubkit import GitHub
+from githubkit.exception import GitHubException
 from githubkit.versions.latest.models import Issue, IssuePropPullRequest
-from niquests import AsyncSession
+from niquests import AsyncSession, RequestException
 
 TEST_PREFIX = "testovanie"
 DATE_FMT = "%d-%m-%Y-%H:%M:%S"
@@ -22,13 +23,28 @@ async def get_issues(now: datetime, owner: str, repo: str) -> Path:
     t.mkdir(parents=True)
 
     g = GitHub(environ["GH_TOKEN"])
-    resp = await g.rest.issues.async_list_for_repo(
-        owner, repo, state="open", labels=LABEL_FILTER
-    )
+    try:
+        resp = await g.rest.issues.async_list_for_repo(
+            owner, repo, state="open", labels=LABEL_FILTER
+        )
+    except GitHubException as ex:
+        print(f"Error while fetching issues from github occurred: {ex}")
+        raise
+
     issues: list[Issue] = resp.parsed_data
+    tasks: list[asyncio.Task[None]] = []
     async with asyncio.TaskGroup() as tg:
         for issue in issues:
-            tg.create_task(_process_issue(issue, t))
+            tasks.append(tg.create_task(_process_issue(issue, t)))
+
+    try:
+        for task in tasks:
+            # for exception propagation
+            task.result()
+    except ExceptionGroup as ex:
+        print(f"Error while processing issues occurred: {ex}")
+        raise
+
     return t
 
 
@@ -88,9 +104,17 @@ async def _download_image(
     s: AsyncSession, issue_dir: Path, url: str, cookies: dict[str, str]
 ) -> Optional[tuple[str, str]]:
     response = await s.get(url, cookies=cookies)
-    if response.status_code == niquests.codes["ok"] and response.content is not None:
-        file_name = url.split("/")[-1]
-        async with async_open(issue_dir / file_name, "wb") as file:
-            await file.write(response.content)
-        return (url, file_name)
+    try:
+        if (
+            response.status_code == niquests.codes["ok"]
+            and response.content is not None
+        ):
+            file_name = url.split("/")[-1]
+            async with async_open(issue_dir / file_name, "wb") as file:
+                await file.write(response.content)
+            return (url, file_name)
+    except RequestException as ex:
+        print(f"Error while fetching image from {url} occurred: {ex}")
+    except (OSError, RuntimeError) as ex:
+        print(f"Error while saving image from {url} occurred: {ex}")
     return None

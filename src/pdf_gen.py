@@ -15,7 +15,7 @@ class Meta(TypedDict):
 OUTPUT_DIR = "output"
 
 
-def generate_pdf(issue_dir: Path) -> None:
+def generate_pdf(issue_dir: Path) -> bool:
     directories = [
         str(d.relative_to(issue_dir.parent)) for d in issue_dir.iterdir() if d.is_dir()
     ]
@@ -23,16 +23,16 @@ def generate_pdf(issue_dir: Path) -> None:
     with issue_dir.joinpath("meta.yaml").open("w", encoding="utf-8") as meta_file:
         yaml.safe_dump(meta, meta_file)
 
-    _run_typst(issue_dir, Path(OUTPUT_DIR) / issue_dir.name)
+    return _run_typst(issue_dir, Path(OUTPUT_DIR) / issue_dir.name)
 
 
-def _run_typst(issue_dir: Path, output_dir: Path) -> None:
+def _run_typst(issue_dir: Path, output_dir: Path) -> bool:
     cwd = Path.cwd()
     output_dir.mkdir(parents=True)
     typst_cmd = [
         "typst",
         "compile",
-        "typst-templates/main.typ",
+        "typst-templates/mai.typ",
         "--root",
         str(cwd),
         "--input",
@@ -40,4 +40,9 @@ def _run_typst(issue_dir: Path, output_dir: Path) -> None:
         f"{output_dir}/testovanie.pdf",
     ]
     print(f"Generating pdf using: '{' '.join(typst_cmd)}'")
-    subprocess.run(typst_cmd, check=False)
+    try:
+        subprocess.run(typst_cmd, check=True, capture_output=True)
+        return True
+    except subprocess.CalledProcessError as ex:
+        print(f"typst failed with error: {ex.stderr}")
+        return False

@@ -16,8 +16,8 @@ async def main() -> None:
     print(f"Downloading issues from repo https://github.com/{owner}/{repo} ...")
     d = await get_issues(now, owner, repo)
     print("Download complete...")
-    generate_pdf(d)
-    print("done")
+    if generate_pdf(d):
+        print("Done")
 
 
 if __name__ == "__main__":
