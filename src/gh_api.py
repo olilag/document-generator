@@ -18,7 +18,7 @@ def get_issues(now: datetime, owner: str, repo: str) -> Path:
     t.mkdir(parents=True)
 
     g = GitHub(environ["GH_TOKEN"])
-    resp = g.rest.issues.list_for_repo(owner, repo, labels=LABEL_FILTER)
+    resp = g.rest.issues.list_for_repo(owner, repo, state="open", labels=LABEL_FILTER)
     issues: list[Issue] = resp.parsed_data
     for issue in issues:
         _process_issue(issue, t)
