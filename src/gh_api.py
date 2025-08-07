@@ -33,6 +33,8 @@ def _process_issue(issue: Issue, parent_dir: Path) -> None:
     issue_dir = parent_dir / str(issue.id)
     issue_dir.mkdir()
 
+    print(f"Saving issue: {issue.title}")
+
     with issue_dir.joinpath("problem.md").open("w", encoding="utf-8") as p_file:
         if isinstance(issue.body, str):
             processed = _download_images(issue.body, issue_dir)

@@ -10,8 +10,13 @@ from pdf_gen import generate_pdf
 def main() -> None:
     load_dotenv()
     now = datetime.now()
-    d = get_issues(now, environ["REPO_OWNER"], environ["REPO_NAME"])
+    owner = environ["REPO_OWNER"]
+    repo = environ["REPO_NAME"]
+    print(f"Downloading issues from repo https://github.com/{owner}/{repo} ...")
+    d = get_issues(now, owner, repo)
+    print("Download complete...")
     generate_pdf(d)
+    print("done")
 
 
 if __name__ == "__main__":

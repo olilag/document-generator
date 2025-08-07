@@ -39,4 +39,5 @@ def _run_typst(issue_dir: Path, output_dir: Path) -> None:
         f"root={issue_dir}",
         f"{output_dir}/testovanie.pdf",
     ]
+    print(f"Generating pdf using: '{' '.join(typst_cmd)}'")
     subprocess.run(typst_cmd, check=False)
