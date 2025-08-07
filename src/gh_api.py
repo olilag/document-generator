@@ -45,7 +45,7 @@ async def _process_issue(issue: Issue, parent_dir: Path) -> None:
     async with async_open(issue_dir / "problem.md", "w", encoding="utf-8") as p_file:
         processed = "missing issue body"
         if isinstance(issue.body, str):
-            processed = await _download_images(issue.body, issue_dir)
+            processed = await _download_images(issue.title, issue.body, issue_dir)
         await p_file.write(processed)
 
     async with async_open(issue_dir / "meta.yaml", "w", encoding="utf-8") as m_file:
@@ -55,9 +55,17 @@ async def _process_issue(issue: Issue, parent_dir: Path) -> None:
 url_regexp = re.compile(r"https?://[^\")]+")
 
 
-async def _download_images(issue_body: str, issue_dir: Path) -> str:
+async def _download_images(issue_title: str, issue_body: str, issue_dir: Path) -> str:
     urls = url_regexp.findall(issue_body)
     cookies = {"user_session": environ["GH_SESSION"]}
+
+    url_count = len(urls)
+    if url_count == 0:
+        # early return, no images need to be downloaded
+        return issue_body
+
+    img_str = f"{url_count} image{'' if url_count == 1 else 's'}"
+    print(f"Downloading {img_str} for issue: {issue_title}")
 
     tasks: list[asyncio.Task[Optional[tuple[str, str]]]] = []
     async with AsyncSession() as s:
