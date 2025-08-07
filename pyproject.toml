@@ -14,7 +14,21 @@ dependencies = [
 ]
 
 [tool.ruff.lint]
-select = ["W", "E", "F", "I", "N", "Q", "A", "LOG", "PTH", "ANN", "PL", "RUF"]
+select = [
+    "W",
+    "E",
+    "F",
+    "I",
+    "N",
+    "Q",
+    "A",
+    "LOG",
+    "PTH",
+    "ANN",
+    "PL",
+    "RUF",
+    "ASYNC",
+]
 
 [tool.uv]
 package = false
