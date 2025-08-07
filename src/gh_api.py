@@ -26,7 +26,7 @@ def get_issues(now: datetime, owner: str, repo: str) -> Path:
 
 
 def _process_issue(issue: Issue, parent_dir: Path) -> None:
-    # github may lists pull requests as issues
+    # github considers pull requests as issues
     if isinstance(issue.pull_request, IssuePropPullRequest):
         return
 
