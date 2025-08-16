@@ -18,6 +18,21 @@ LABEL_FILTER = "Na testovanie"
 INPUT_DIR = "input"
 
 
+async def get_issue(
+    owner: str, repo: str, issue_number: int, download_to: Path
+) -> None:
+    g = GitHub(environ["GH_TOKEN"])
+    try:
+        resp = await g.rest.issues.async_get(owner, repo, issue_number)
+    except GitHubException as ex:
+        print(f"Error while fetching an issue from GitHub occurred: {ex}")
+        raise
+
+    issue = resp.parsed_data
+
+    await _process_issue(issue, download_to)
+
+
 async def get_issues(owner: str, repo: str) -> Path:
     now = datetime.now()
     t = Path(f"{INPUT_DIR}/{TEST_PREFIX}-{now.strftime(DATE_FMT)}")
@@ -67,6 +82,8 @@ async def _process_issue(issue: Issue, parent_dir: Path) -> None:
 
     async with async_open(issue_dir / "meta.yaml", "w", encoding="utf-8") as m_file:
         await m_file.write(f"title: {issue.title}\n")
+        # TODO: get user from issue
+        # TODO: get correct answer from issue body
 
 
 url_regexp = re.compile(r"https?://[^\")]+")

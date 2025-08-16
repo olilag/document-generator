@@ -1,4 +1,5 @@
 from argparse import ArgumentParser, Namespace
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -9,6 +10,7 @@ parser = ArgumentParser()
 subparsers = parser.add_subparsers()
 
 pdf = subparsers.add_parser("pdf")
+pdf.add_argument("-r", "--regenerate", type=Path)
 pdf.set_defaults(func=pdf_gen.main)
 
 template = subparsers.add_parser("template")

@@ -2,7 +2,7 @@ import subprocess
 from argparse import Namespace
 from os import environ
 from pathlib import Path
-from typing import TypedDict
+from typing import TypedDict, cast
 
 import uvloop
 import yaml
@@ -11,15 +11,19 @@ from gh_api import get_issues
 
 
 def main(args: Namespace) -> None:
-    uvloop.run(_main())
+    uvloop.run(_main(args))
 
 
-async def _main() -> None:
-    owner = environ["REPO_OWNER"]
-    repo = environ["REPO_NAME"]
-    print(f"Downloading issues from repo https://github.com/{owner}/{repo} ...")
-    d = await get_issues(owner, repo)
-    print("Download complete...")
+async def _main(args: Namespace) -> None:
+    if args.regenerate is None:
+        owner = environ["REPO_OWNER"]
+        repo = environ["REPO_NAME"]
+        print(f"Downloading issues from repo https://github.com/{owner}/{repo} ...")
+        d = await get_issues(owner, repo)
+        print("Download complete...")
+    else:
+        d = cast(Path, args.regenerate)
+
     if _generate_pdf(d):
         print("Done")
 
@@ -47,7 +51,7 @@ def _generate_pdf(issue_dir: Path) -> bool:
 
 def _run_typst(issue_dir: Path, output_dir: Path) -> bool:
     cwd = Path.cwd()
-    output_dir.mkdir(parents=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
     typst_cmd = [
         "typst",
         "compile",
