@@ -32,7 +32,7 @@ def _run_typst(issue_dir: Path, output_dir: Path) -> bool:
     typst_cmd = [
         "typst",
         "compile",
-        "typst-templates/mai.typ",
+        "typst-templates/main.typ",
         "--root",
         str(cwd),
         "--input",
