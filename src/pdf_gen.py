@@ -2,7 +2,7 @@ import subprocess
 from argparse import Namespace
 from os import environ
 from pathlib import Path
-from typing import TypedDict, cast
+from typing import Optional, TypedDict
 
 import uvloop
 import yaml
@@ -11,20 +11,18 @@ from gh_api import get_issues
 
 
 def main(args: Namespace) -> None:
-    uvloop.run(_main(args))
+    uvloop.run(_main(args.regenerate))
 
 
-async def _main(args: Namespace) -> None:
-    if args.regenerate is None:
+async def _main(directory: Optional[Path]) -> None:
+    if directory is None:
         owner = environ["REPO_OWNER"]
         repo = environ["REPO_NAME"]
         print(f"Downloading issues from repo https://github.com/{owner}/{repo} ...")
-        d = await get_issues(owner, repo)
+        directory = await get_issues(owner, repo)
         print("Download complete...")
-    else:
-        d = cast(Path, args.regenerate)
 
-    if _generate_pdf(d):
+    if _generate_pdf(directory):
         print("Done")
 
 
