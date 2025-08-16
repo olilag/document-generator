@@ -18,7 +18,8 @@ LABEL_FILTER = "Na testovanie"
 INPUT_DIR = "input"
 
 
-async def get_issues(now: datetime, owner: str, repo: str) -> Path:
+async def get_issues(owner: str, repo: str) -> Path:
+    now = datetime.now()
     t = Path(f"{INPUT_DIR}/{TEST_PREFIX}-{now.strftime(DATE_FMT)}")
     t.mkdir(parents=True)
 
@@ -28,7 +29,7 @@ async def get_issues(now: datetime, owner: str, repo: str) -> Path:
             owner, repo, state="open", labels=LABEL_FILTER
         )
     except GitHubException as ex:
-        print(f"Error while fetching issues from github occurred: {ex}")
+        print(f"Error while fetching issues from GitHub occurred: {ex}")
         raise
 
     issues: list[Issue] = resp.parsed_data

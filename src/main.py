@@ -1,24 +1,28 @@
-from datetime import datetime
-from os import environ
+from argparse import ArgumentParser, Namespace
 
-import uvloop
 from dotenv import load_dotenv
 
-from gh_api import get_issues
-from pdf_gen import generate_pdf
+import pdf_gen
+import template_gen
+
+parser = ArgumentParser()
+subparsers = parser.add_subparsers()
+
+pdf = subparsers.add_parser("pdf")
+pdf.set_defaults(func=pdf_gen.main)
+
+template = subparsers.add_parser("template")
+template.add_argument("issue_number", type=int)
+template.add_argument("round_number", type=int)
+template.add_argument("problem_number", type=int)
+template.set_defaults(func=template_gen.main)
 
 
-async def main() -> None:
+def main(args: Namespace) -> None:
     load_dotenv()
-    now = datetime.now()
-    owner = environ["REPO_OWNER"]
-    repo = environ["REPO_NAME"]
-    print(f"Downloading issues from repo https://github.com/{owner}/{repo} ...")
-    d = await get_issues(now, owner, repo)
-    print("Download complete...")
-    if generate_pdf(d):
-        print("Done")
+    args.func(args)
 
 
 if __name__ == "__main__":
-    uvloop.run(main())
+    args = parser.parse_args()
+    main(args)

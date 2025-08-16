@@ -1,8 +1,27 @@
 import subprocess
+from argparse import Namespace
+from os import environ
 from pathlib import Path
 from typing import TypedDict
 
+import uvloop
 import yaml
+
+from gh_api import get_issues
+
+
+def main(args: Namespace) -> None:
+    uvloop.run(_main())
+
+
+async def _main() -> None:
+    owner = environ["REPO_OWNER"]
+    repo = environ["REPO_NAME"]
+    print(f"Downloading issues from repo https://github.com/{owner}/{repo} ...")
+    d = await get_issues(owner, repo)
+    print("Download complete...")
+    if _generate_pdf(d):
+        print("Done")
 
 
 class Meta(TypedDict):
@@ -15,7 +34,7 @@ class Meta(TypedDict):
 OUTPUT_DIR = "output"
 
 
-def generate_pdf(issue_dir: Path) -> bool:
+def _generate_pdf(issue_dir: Path) -> bool:
     directories = [
         str(d.relative_to(issue_dir.parent)) for d in issue_dir.iterdir() if d.is_dir()
     ]
