@@ -118,6 +118,14 @@ async def _download_images(issue_title: str, issue_body: str, issue_dir: Path) -
     return issue_body
 
 
+CONTENT_TYPE_TO_EXTENSION = {
+    "image/svg+xml": "svg",
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "image/webp": "webp",
+}
+
+
 async def _download_image(
     s: AsyncSession, issue_dir: Path, url: str, cookies: dict[str, str]
 ) -> Optional[tuple[str, str]]:
@@ -127,7 +135,9 @@ async def _download_image(
             response.status_code == niquests.codes["ok"]
             and response.content is not None
         ):
-            file_name = url.split("/")[-1]
+            ct = str(response.headers["Content-Type"])
+            ext = CONTENT_TYPE_TO_EXTENSION[ct]
+            file_name = f"{url.split('/')[-1]}.{ext}"
             async with async_open(issue_dir / file_name, "wb") as file:
                 await file.write(response.content)
             return (url, file_name)
