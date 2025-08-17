@@ -1,5 +1,6 @@
 import subprocess
 from argparse import Namespace
+from datetime import datetime
 from os import environ
 from pathlib import Path
 from typing import Optional, TypedDict
@@ -14,12 +15,20 @@ def main(args: Namespace) -> None:
     uvloop.run(_main(args.regenerate))
 
 
+INPUT_DIR = "input"
+TEST_PREFIX = "testovanie"
+DATE_FMT = "%d-%m-%Y-%H:%M:%S"
+
+
 async def _main(directory: Optional[Path]) -> None:
     if directory is None:
         owner = environ["REPO_OWNER"]
         repo = environ["REPO_NAME"]
+        now = datetime.now()
+        directory = Path(INPUT_DIR) / f"{TEST_PREFIX}-{now.strftime(DATE_FMT)}"
+        directory.mkdir(parents=True)
         print(f"Downloading issues from repo https://github.com/{owner}/{repo} ...")
-        directory = await get_issues(owner, repo)
+        await get_issues(owner, repo, directory)
         print("Download complete...")
 
     if _generate_pdf(directory):

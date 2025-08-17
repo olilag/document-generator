@@ -1,6 +1,5 @@
 import asyncio
 import re
-from datetime import datetime
 from html.parser import HTMLParser
 from os import environ
 from pathlib import Path
@@ -13,8 +12,6 @@ from githubkit.exception import GitHubException
 from githubkit.versions.latest.models import Issue, IssuePropPullRequest
 from niquests import AsyncSession, RequestException
 
-TEST_PREFIX = "testovanie"
-DATE_FMT = "%d-%m-%Y-%H:%M:%S"
 LABEL_FILTER = "Na testovanie"
 INPUT_DIR = "input"
 
@@ -34,11 +31,7 @@ async def get_issue(
     await _process_issue(issue, download_to, False)
 
 
-async def get_issues(owner: str, repo: str) -> Path:
-    now = datetime.now()
-    t = Path(f"{INPUT_DIR}/{TEST_PREFIX}-{now.strftime(DATE_FMT)}")
-    t.mkdir(parents=True)
-
+async def get_issues(owner: str, repo: str, download_to: Path) -> None:
     g = GitHub(environ["GH_TOKEN"])
     try:
         resp = await g.rest.issues.async_list_for_repo(
@@ -52,7 +45,7 @@ async def get_issues(owner: str, repo: str) -> Path:
     tasks: list[asyncio.Task[None]] = []
     async with asyncio.TaskGroup() as tg:
         for issue in issues:
-            tasks.append(tg.create_task(_process_issue(issue, t)))
+            tasks.append(tg.create_task(_process_issue(issue, download_to)))
 
     try:
         for task in tasks:
@@ -61,8 +54,6 @@ async def get_issues(owner: str, repo: str) -> Path:
     except ExceptionGroup as ex:
         print(f"Error while processing issues occurred: {ex}")
         raise
-
-    return t
 
 
 async def _process_issue(
