@@ -1,9 +1,10 @@
 import asyncio
 import re
 from datetime import datetime
+from html.parser import HTMLParser
 from os import environ
 from pathlib import Path
-from typing import Optional
+from typing import Optional, cast
 
 import niquests
 from aiofile import async_open
@@ -30,7 +31,7 @@ async def get_issue(
 
     issue = resp.parsed_data
 
-    await _process_issue(issue, download_to)
+    await _process_issue(issue, download_to, False)
 
 
 async def get_issues(owner: str, repo: str) -> Path:
@@ -64,13 +65,18 @@ async def get_issues(owner: str, repo: str) -> Path:
     return t
 
 
-async def _process_issue(issue: Issue, parent_dir: Path) -> None:
+async def _process_issue(
+    issue: Issue, parent_dir: Path, create_issue_dir: bool = True
+) -> None:
     # github considers pull requests as issues
     if isinstance(issue.pull_request, IssuePropPullRequest):
         return
 
-    issue_dir = parent_dir / str(issue.id)
-    issue_dir.mkdir()
+    if create_issue_dir:
+        issue_dir = parent_dir / str(issue.id)
+        issue_dir.mkdir()
+    else:
+        issue_dir = parent_dir
 
     print(f"Saving issue: {issue.title}")
 
@@ -80,17 +86,60 @@ async def _process_issue(issue: Issue, parent_dir: Path) -> None:
             processed = await _download_images(issue.title, issue.body, issue_dir)
         await p_file.write(processed)
 
+    answer = _extract_answer(cast(str, issue.body))
     async with async_open(issue_dir / "meta.yaml", "w", encoding="utf-8") as m_file:
         await m_file.write(f"title: {issue.title}\n")
+        if answer is not None:
+            await m_file.write(f"answer: {answer}\n")
         # TODO: get user from issue
-        # TODO: get correct answer from issue body
 
 
-url_regexp = re.compile(r"https?://[^\")]+")
+DETAILS_REGEXP = re.compile(r"<details>(?:.|\n)*?Heslo(?:.|\n)*?</details>")
+
+
+class DetailsParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self._in_details = False
+        self._tag_depth = 0
+        self.answer: Optional[str] = None
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if self._in_details:
+            self._tag_depth += 1
+            return
+
+        if tag == "details":
+            self._in_details = True
+
+    def handle_data(self, data: str) -> None:
+        if self._tag_depth == 0:
+            self.answer = data.strip()
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag == "details" and self._tag_depth == 0:
+            self._in_details = False
+
+        if self._in_details:
+            self._tag_depth -= 1
+
+
+def _extract_answer(issue_body: str) -> Optional[str]:
+    match = DETAILS_REGEXP.search(issue_body)
+    if match is None:
+        return None
+
+    details = match.group(0)
+    parser = DetailsParser()
+    parser.feed(details)
+    return parser.answer
+
+
+URL_REGEXP = re.compile(r"https?://[^\")]+")
 
 
 async def _download_images(issue_title: str, issue_body: str, issue_dir: Path) -> str:
-    urls = url_regexp.findall(issue_body)
+    urls = URL_REGEXP.findall(issue_body)
     cookies = {"user_session": environ["GH_SESSION"]}
 
     url_count = len(urls)
