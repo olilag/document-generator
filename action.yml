@@ -15,6 +15,7 @@ runs:
   using: "docker"
   image: "Dockerfile"
   args:
+    - template
     - ${{ inputs.issue-number }}
     - ${{ inputs.round-number }}
     - ${{ inputs.problem-number }}
