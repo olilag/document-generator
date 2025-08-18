@@ -17,12 +17,6 @@ from githubkit.versions.latest.types import (
 from niquests import AsyncSession, RequestException
 
 LABEL_FILTER = "Na testovanie"
-# GH_API = GitHub(
-#    AppAuthStrategy(
-#        app_id=environ["GH_APP_ID"],
-#        private_key=environ["GH_APP_PRIVATE_KEY"].replace("\\n", "\n"),
-#    ).as_installation(int(environ["GH_APP_INSTALLATION_ID"]))
-# )
 GH_API = GitHub(environ["GH_TOKEN"])
 
 

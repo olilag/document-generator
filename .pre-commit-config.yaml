@@ -12,6 +12,12 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
 
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    # uv version.
+    rev: 0.8.11
+    hooks:
+      - id: uv-lock
+
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.17.1
     hooks:
@@ -27,9 +33,3 @@ repos:
             "typst>=0.13.5",
           ]
         args: [--strict]
-
-  - repo: https://github.com/astral-sh/uv-pre-commit
-    # uv version.
-    rev: 0.8.11
-    hooks:
-      - id: uv-lock
