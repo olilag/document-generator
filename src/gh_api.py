@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import re
 from html.parser import HTMLParser
 from os import environ
@@ -10,6 +11,9 @@ from aiofile import async_open
 from githubkit import AppAuthStrategy, GitHub
 from githubkit.exception import GitHubException
 from githubkit.versions.latest.models import Issue, IssuePropPullRequest
+from githubkit.versions.latest.types import (
+    ReposOwnerRepoGitTreesPostBodyPropTreeItemsType,
+)
 from niquests import AsyncSession, RequestException
 
 LABEL_FILTER = "Na testovanie"
@@ -19,6 +23,79 @@ GH_API = GitHub(
         private_key=Path(environ["GH_APP_PRIVATE_KEY_PATH"]).read_text("utf-8"),
     ).as_installation(int(environ["GH_APP_INSTALLATION_ID"]))
 )
+
+
+async def commit_directory(
+    owner: str, repo: str, branch: str, directory: Path, git_path: str
+) -> None:
+    resp_ref = await GH_API.rest.git.async_get_ref(owner, repo, "heads/master")
+    master_ref = resp_ref.parsed_data
+
+    resp_ref = await GH_API.rest.git.async_create_ref(
+        owner, repo, ref=f"refs/heads/{branch}", sha=master_ref.object_.sha
+    )
+    branch_ref = resp_ref.parsed_data
+
+    tree = await _create_git_tree(owner, repo, directory, git_path)
+    resp_tree = await GH_API.rest.git.async_create_tree(
+        owner,
+        repo,
+        base_tree=branch_ref.object_.sha,
+        tree=tree,
+    )
+    commit_tree = resp_tree.parsed_data
+
+    resp_commit = await GH_API.rest.git.async_create_commit(
+        owner,
+        repo,
+        message=f"{git_path}: add problem from issue",
+        tree=commit_tree.sha,
+        parents=[branch_ref.object_.sha],
+    )
+    commit = resp_commit.parsed_data
+
+    await GH_API.rest.git.async_update_ref(
+        owner, repo, f"heads/{branch}", sha=commit.sha
+    )
+
+
+async def _create_git_tree(
+    owner: str,
+    repo: str,
+    directory: Path,
+    git_path: str,
+) -> list[ReposOwnerRepoGitTreesPostBodyPropTreeItemsType]:
+    tasks: list[asyncio.Task[ReposOwnerRepoGitTreesPostBodyPropTreeItemsType]] = []
+    async with asyncio.TaskGroup() as tg:
+        for file in directory.iterdir():
+            tasks.append(
+                tg.create_task(_create_git_tree_part(owner, repo, file, git_path))
+            )
+
+    result: list[ReposOwnerRepoGitTreesPostBodyPropTreeItemsType] = []
+    for task in tasks:
+        result.append(task.result())
+
+    return result
+
+
+async def _create_git_tree_part(
+    owner: str, repo: str, file: Path, git_path: str
+) -> ReposOwnerRepoGitTreesPostBodyPropTreeItemsType:
+    async with async_open(file, "rb") as f:
+        content = base64.b64encode(await f.read())
+
+    resp = await GH_API.rest.git.async_create_blob(
+        owner, repo, content=content.decode("utf-8"), encoding="base64"
+    )
+    blob = resp.parsed_data
+
+    return {
+        "path": f"{git_path}/{file.name}",
+        "sha": blob.sha,
+        "mode": "100644",
+        "type": "blob",
+    }
 
 
 async def get_issue(
