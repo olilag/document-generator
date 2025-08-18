@@ -1,12 +1,12 @@
 [project]
 name = "document-generator"
-version = "0.1.0"
+version = "0.3.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "aiofile>=3.9.0",
-    "githubkit[auth-app]>=0.13.0",
+    "githubkit>=0.13.0",
     "niquests[speedups]>=3.14.1",
     "python-dotenv>=1.1.1",
     "pyyaml>=6.0.2",
@@ -39,8 +39,27 @@ strict = true
 
 [dependency-groups]
 dev = [
+    "bumpver>=2025.1131",
     "mypy>=1.17.1",
     "pre-commit>=4.2.0",
     "ruff>=0.12.7",
     "types-pyyaml>=6.0.12.20250516",
+]
+
+[tool.bumpver]
+current_version = "v0.3.0"
+version_pattern = "vMAJOR.MINOR.PATCH"
+commit_message = "bump version {old_version} -> {new_version}"
+tag_message = "{new_version}"
+tag_scope = "default"
+pre_commit_hook = ""
+post_commit_hook = ""
+commit = true
+tag = true
+push = true
+
+[tool.bumpver.file_patterns]
+"pyproject.toml" = [
+    '^version = "{pep440_version}"',
+    '^current_version = "{version}"',
 ]
