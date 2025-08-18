@@ -7,21 +7,25 @@ from typing import Optional, cast
 
 import niquests
 from aiofile import async_open
-from githubkit import GitHub
+from githubkit import AppAuthStrategy, GitHub
 from githubkit.exception import GitHubException
 from githubkit.versions.latest.models import Issue, IssuePropPullRequest
 from niquests import AsyncSession, RequestException
 
 LABEL_FILTER = "Na testovanie"
-INPUT_DIR = "input"
+GH_API = GitHub(
+    AppAuthStrategy(
+        app_id=environ["GH_APP_ID"],
+        private_key=Path(environ["GH_APP_PRIVATE_KEY_PATH"]).read_text("utf-8"),
+    ).as_installation(int(environ["GH_APP_INSTALLATION_ID"]))
+)
 
 
 async def get_issue(
     owner: str, repo: str, issue_number: int, download_to: Path
 ) -> None:
-    g = GitHub(environ["GH_TOKEN"])
     try:
-        resp = await g.rest.issues.async_get(owner, repo, issue_number)
+        resp = await GH_API.rest.issues.async_get(owner, repo, issue_number)
     except GitHubException as ex:
         print(f"Error while fetching an issue from GitHub occurred: {ex}")
         raise
@@ -32,9 +36,8 @@ async def get_issue(
 
 
 async def get_issues(owner: str, repo: str, download_to: Path) -> None:
-    g = GitHub(environ["GH_TOKEN"])
     try:
-        resp = await g.rest.issues.async_list_for_repo(
+        resp = await GH_API.rest.issues.async_list_for_repo(
             owner, repo, state="open", labels=LABEL_FILTER
         )
     except GitHubException as ex:

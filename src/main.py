@@ -3,8 +3,11 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-import pdf_gen
-import template_gen
+# need to load env before importing gh_api module
+load_dotenv()
+
+import pdf_gen  # noqa: E402
+import template_gen  # noqa: E402
 
 parser = ArgumentParser()
 subparsers = parser.add_subparsers()
@@ -21,7 +24,6 @@ template.set_defaults(func=template_gen.main)
 
 
 def main(args: Namespace) -> None:
-    load_dotenv()
     args.func(args)
 
 
