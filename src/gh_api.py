@@ -25,6 +25,28 @@ GH_API = GitHub(
 )
 
 
+async def create_pull_request(  # noqa: PLR0913
+    owner: str,
+    repo: str,
+    from_branch: str,
+    to_branch: str,
+    title: str,
+    content: str,
+    draft: bool = False,
+) -> None:
+    await GH_API.rest.pulls.async_create(
+        owner,
+        repo,
+        head=from_branch,
+        base=to_branch,
+        title=title,
+        body=content,
+        maintainer_can_modify=True,
+        draft=draft,
+    )
+    # TODO: maybe add some labels and stuff to the PR
+
+
 async def commit_directory(
     owner: str, repo: str, branch: str, directory: Path, git_path: str
 ) -> None:
