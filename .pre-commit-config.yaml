@@ -27,3 +27,9 @@ repos:
             "typst>=0.13.5",
           ]
         args: [--strict]
+
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    # uv version.
+    rev: 0.8.11
+    hooks:
+      - id: uv-lock
