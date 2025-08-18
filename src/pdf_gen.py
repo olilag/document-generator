@@ -1,10 +1,10 @@
-import subprocess
 from argparse import Namespace
 from datetime import datetime
 from os import environ
 from pathlib import Path
 from typing import Optional, TypedDict
 
+import typst
 import uvloop
 import yaml
 
@@ -59,20 +59,15 @@ def _generate_pdf(issue_dir: Path) -> bool:
 def _run_typst(issue_dir: Path, output_dir: Path) -> bool:
     cwd = Path.cwd()
     output_dir.mkdir(parents=True, exist_ok=True)
-    typst_cmd = [
-        "typst",
-        "compile",
-        "typst-templates/main.typ",
-        "--root",
-        str(cwd),
-        "--input",
-        f"root={issue_dir}",
-        f"{output_dir}/testovanie.pdf",
-    ]
-    print(f"Generating pdf using: '{' '.join(typst_cmd)}'")
+    print("Generating pdf with typst")
     try:
-        subprocess.run(typst_cmd, check=True, capture_output=True)
+        typst.compile(
+            "typst-templates/main.typ",
+            output=f"{output_dir}/testovanie.pdf",
+            root=str(cwd),
+            sys_inputs={"root": str(issue_dir)},
+        )
         return True
-    except subprocess.CalledProcessError as ex:
-        print(f"typst failed with error: {ex.stderr}")
+    except typst.TypstError as ex:
+        print(f"Typst failed with message: {ex.message}")
         return False
