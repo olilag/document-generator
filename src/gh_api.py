@@ -8,7 +8,7 @@ from typing import Optional, cast
 
 import niquests
 from aiofile import async_open
-from githubkit import AppAuthStrategy, GitHub
+from githubkit import GitHub
 from githubkit.exception import GitHubException
 from githubkit.versions.latest.models import Issue, IssuePropPullRequest
 from githubkit.versions.latest.types import (
@@ -17,12 +17,13 @@ from githubkit.versions.latest.types import (
 from niquests import AsyncSession, RequestException
 
 LABEL_FILTER = "Na testovanie"
-GH_API = GitHub(
-    AppAuthStrategy(
-        app_id=environ["GH_APP_ID"],
-        private_key=environ["GH_APP_PRIVATE_KEY"].replace("\\n", "\n"),
-    ).as_installation(int(environ["GH_APP_INSTALLATION_ID"]))
-)
+# GH_API = GitHub(
+#    AppAuthStrategy(
+#        app_id=environ["GH_APP_ID"],
+#        private_key=environ["GH_APP_PRIVATE_KEY"].replace("\\n", "\n"),
+#    ).as_installation(int(environ["GH_APP_INSTALLATION_ID"]))
+# )
+GH_API = GitHub(environ["GH_TOKEN"])
 
 
 async def create_pull_request(  # noqa: PLR0913
