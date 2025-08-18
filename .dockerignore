@@ -1,0 +1,7 @@
+.*
+justfile
+input
+output
+__pycache__
+README.md
+*.perm
